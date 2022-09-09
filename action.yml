@@ -1,0 +1,41 @@
+name: Auto approve
+
+description: Approve Pull Requests automatically
+
+inputs:
+  github-token:
+    description: GitHub token
+    required: true
+  pr-number:
+    description: Pull Request number
+    required: false
+    default: ${{ github.event.pull_request.number }}
+  trigger:
+    description: Trigger string
+    required: false
+    default: 'approve it'
+  reaction:
+    description: Reaction to add
+    required: false
+    default: 'hooray'
+  review-message:
+    description: Review message
+    required: false
+    default: 'Auto approve triggered by ${{ github.actor }}'
+
+runs:
+  using: composite
+  steps:
+    - uses: khan/pull-request-comment-trigger@v1.1.0
+      id: check
+      with:
+        trigger: '${{ inputs.trigger }}'
+        reaction: '${{ inputs.reaction }}'
+      env:
+        GITHUB_TOKEN: '${{ inputs.github-token }}'
+    - uses: hmarr/auto-approve-action@v2
+      if: steps.check.outputs.triggered == 'true'
+      with:
+        github-token: ${{ inputs.github-token }}
+        review-message: '${{ inputs.review-message }}'
+        pull-request-number: ${{ inputs.pr-number }}
